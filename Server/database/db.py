@@ -166,4 +166,3 @@ def get_sensor_with_measurements(sensor_id):
             'measurements': measurements
         }
     return None
-
