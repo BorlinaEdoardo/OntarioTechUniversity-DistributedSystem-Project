@@ -42,9 +42,9 @@ def zmq_server():
     """ZMQ server function"""
     context = zmq.Context()
     socket = context.socket(zmq.PULL)
-    socket.bind("tcp://*:6000")
+    socket.bind("tcp://*:5000")
 
-    print("Air Quality Server running on port 6000...")
+    print("Air Quality Server running on port 5000...")
     print("Waiting for sensor data...\n")
 
     while True:
@@ -85,6 +85,8 @@ def main():
     # Run Flask API server
     print("Starting Flask API on http://localhost:5000")
     app.run(debug=True, host='0.0.0.0', port=5000, use_reloader=False)
+
+
 
 if __name__ == "__main__":
     main()
