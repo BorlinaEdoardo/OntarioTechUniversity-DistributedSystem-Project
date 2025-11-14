@@ -42,9 +42,9 @@ def zmq_server():
     """ZMQ server function"""
     context = zmq.Context()
     socket = context.socket(zmq.PULL)
-    socket.bind("tcp://*:5000")
+    socket.bind("tcp://*:6000")
 
-    print("Air Quality Server running on port 5000...")
+    print("Air Quality Server running on port 6000...")
     print("Waiting for sensor data...\n")
 
     while True:
