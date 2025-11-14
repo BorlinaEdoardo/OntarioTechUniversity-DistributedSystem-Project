@@ -46,7 +46,7 @@ def create_sensor(city):
     """Create a new sensor"""
     connection = get_connection()
     cursor = connection.cursor()
-    cursor.execute("INSERT INTO SENSOR (City) VALUES (?)", (city))
+    cursor.execute("INSERT INTO SENSOR (City) VALUES (?)", (city,))
     sensor_id = cursor.lastrowid
     connection.commit()
     connection.close()
@@ -100,7 +100,7 @@ def create_measurement(measure, pollutant, sensor_id, timestamp=None):
     connection = get_connection()
     cursor = connection.cursor()
     cursor.execute("INSERT INTO MEASUREMENT (Pollutant, Measure, Timestamp, Sensor_id) VALUES (?,?, ?, ?)", 
-                   (measure, pollutant, timestamp, sensor_id))
+                   (pollutant, measure, timestamp, sensor_id))
     measurement_id = cursor.lastrowid
     connection.commit()
     connection.close()

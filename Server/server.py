@@ -51,6 +51,7 @@ def zmq_server():
         try:
             msg = socket.recv_string()
             sensor_id, location, pm25, no2, o3, timestamp = msg.split(",")
+            sensor_id = int(sensor_id_str.replace("Sensor", ""))
 
             print(
                 f"[{timestamp}] {sensor_id} ({location}) → "
@@ -66,9 +67,9 @@ def zmq_server():
                 db.create_sensor(location) 
             
             # Store measurements 
-            db.create_measurement(float(pm25), "pm2.5", int(sensor_id), timestamp)
-            db.create_measurement(float(no2), "NO2", int(sensor_id), timestamp )
-            db.create_measurement(float(no2), "O3", int(sensor_id), timestamp )
+            db.create_measurement(float(pm25), "PM2.5", sensor_id, timestamp)
+            db.create_measurement(float(no2), "NO2", sensor_id, timestamp)
+            db.create_measurement(float(o3), "O3", sensor_id, timestamp)
 
 
         except KeyboardInterrupt:
