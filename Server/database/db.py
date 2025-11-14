@@ -21,7 +21,7 @@ def create_tables():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS SENSOR(
                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                   City TEXT NOT NULL,
+                   City TEXT NOT NULL
                    )
      """)
     
@@ -31,7 +31,7 @@ def create_tables():
                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
                    Measure REAL NOT NULL,
                    Timestamp DATETIME NOT NULL,
-                   Pollutant TEXT NOT NULL
+                   Pollutant TEXT NOT NULL,
                    Sensor_id INTEGER,
                    FOREIGN KEY (Sensor_id) REFERENCES SENSOR(Id)
                    ON UPDATE CASCADE
