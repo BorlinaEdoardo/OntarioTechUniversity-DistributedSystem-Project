@@ -63,7 +63,7 @@ def zmq_server():
             sensor_exists = any(s[0] == int(sensor_id) for s in existing_sensors if s)
             
             if not sensor_exists:
-                db.create_sensor(location, "PM2.5")  # You can modify this logic
+                db.create_sensor(location, "PM2.5") 
             
             # Store measurements (you might want to store each pollutant separately)
             db.create_measurement(float(pm25), int(sensor_id), timestamp)

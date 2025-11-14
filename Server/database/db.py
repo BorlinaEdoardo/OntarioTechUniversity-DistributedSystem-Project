@@ -1,3 +1,4 @@
+from datetime import datetime
 import sqlite3
 import os
 
@@ -21,7 +22,6 @@ def create_tables():
         CREATE TABLE IF NOT EXISTS SENSOR(
                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
                    City TEXT NOT NULL,
-                   Pollutant TEXT NOT NULL
                    )
      """)
     
@@ -31,6 +31,7 @@ def create_tables():
                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
                    Measure REAL NOT NULL,
                    Timestamp DATETIME NOT NULL,
+                   Pollutant TEXT NOT NULL
                    Sensor_id INTEGER,
                    FOREIGN KEY (Sensor_id) REFERENCES SENSOR(Id)
                    ON UPDATE CASCADE
@@ -41,11 +42,11 @@ def create_tables():
     connection.commit()
     connection.close()
 # SENSOR CRUD Operations
-def create_sensor(city, pollutant):
+def create_sensor(city):
     """Create a new sensor"""
     connection = get_connection()
     cursor = connection.cursor()
-    cursor.execute("INSERT INTO SENSOR (City, Pollutant) VALUES (?, ?)", (city, pollutant))
+    cursor.execute("INSERT INTO SENSOR (City) VALUES (?)", (city))
     sensor_id = cursor.lastrowid
     connection.commit()
     connection.close()
@@ -69,12 +70,12 @@ def get_all_sensors():
     connection.close()
     return sensors
 
-def update_sensor(sensor_id, city, pollutant):
+def update_sensor(sensor_id, city):
     """Update a sensor"""
     connection = get_connection()
     cursor = connection.cursor()
-    cursor.execute("UPDATE SENSOR SET City = ?, Pollutant = ? WHERE Id = ?", 
-                   (city, pollutant, sensor_id))
+    cursor.execute("UPDATE SENSOR SET City = ? WHERE Id = ?", 
+                   (city, sensor_id))
     rows_affected = cursor.rowcount
     connection.commit()
     connection.close()
@@ -91,15 +92,15 @@ def delete_sensor(sensor_id):
     return rows_affected
 
 # MEASUREMENT CRUD Operations
-def create_measurement(measure, sensor_id, timestamp=None):
+def create_measurement(measure, pollutant, sensor_id, timestamp=None):
     """Create a new measurement"""
     if timestamp is None:
         timestamp = datetime.now()
     
     connection = get_connection()
     cursor = connection.cursor()
-    cursor.execute("INSERT INTO MEASUREMENT (Measure, Timestamp, Sensor_id) VALUES (?, ?, ?)", 
-                   (measure, timestamp, sensor_id))
+    cursor.execute("INSERT INTO MEASUREMENT (Pollutant, Measure, Timestamp, Sensor_id) VALUES (?,?, ?, ?)", 
+                   (measure, pollutant, timestamp, sensor_id))
     measurement_id = cursor.lastrowid
     connection.commit()
     connection.close()
@@ -132,14 +133,14 @@ def get_all_measurements():
     connection.close()
     return measurements
 
-def update_measurement(measurement_id, measure, timestamp=None):
+def update_measurement(measurement_id, measure, pollutant, timestamp=None):
     """Update a measurement"""
     if timestamp is None:
         timestamp = datetime.now()
     
     connection = get_connection()
     cursor = connection.cursor()
-    cursor.execute("UPDATE MEASUREMENT SET Measure = ?, Timestamp = ? WHERE Id = ?", 
+    cursor.execute("UPDATE MEASUREMENT SET Measure = ?, Timestamp = ?, Pollutant=?  WHERE Id = ?", 
                    (measure, timestamp, measurement_id))
     rows_affected = cursor.rowcount
     connection.commit()
