@@ -17,7 +17,7 @@ def main():
 
         subprocess.Popen(
             [sys.executable, "sensor.py", sensor_id],
-            creationflags=creationflags
+            creationflags=subprocess.CREATE_NEW_CONSOLE
         )
 
         time.sleep(0.3)  # small delay so windows open cleanly
