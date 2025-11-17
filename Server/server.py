@@ -1,6 +1,6 @@
 import zmq
-from database import db  # Fixed import - use 'from database import db'
-from flask import Flask, jsonify, request
+from database import db  # requires project_root/database/__init__.py
+from flask import Flask, jsonify
 import threading
 
 app = Flask(__name__)
@@ -8,38 +8,41 @@ app = Flask(__name__)
 # Initialize database
 db.create_tables()
 
-# API endpoints
-@app.route('/getMeasures/<int:sensor_id>', methods=['GET'])  
-def get_measurements_by_sensor(sensor_id):  # Fixed function name and added parameter
-    """Get all measurements by sensor ID"""
+# ---------- Flask API endpoints ----------
+
+@app.route('/getMeasures/<int:sensor_id>', methods=['GET'])
+def get_measurements_by_sensor(sensor_id):
+    """Get all measurements by sensor ID."""
     try:
         measurements = db.get_measurements_by_sensor(sensor_id)
         return jsonify({
-            'sensor_id': sensor_id,
-            'measurements': measurements,
-            'count': len(measurements)
+            "sensor_id": sensor_id,
+            "measurements": measurements,
+            "count": len(measurements)
         })
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/sensors', methods=['GET'])
 def get_all_sensors():
-    """Get all sensors"""
+    """Get all sensors."""
     try:
         sensors = db.get_all_sensors()
         return jsonify({
-            'sensors': sensors,
-            'count': len(sensors)
+            "sensors": sensors,
+            "count": len(sensors)
         })
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/hello', methods=['GET'])
 def hello_world():
     return jsonify(message="Hello, World!")
 
+# ---------- ZMQ Server ----------
+
 def zmq_server():
-    """ZMQ server function"""
+    """ZMQ server function that receives sensor data and stores it."""
     context = zmq.Context()
     socket = context.socket(zmq.PULL)
     socket.bind("tcp://*:6000")
@@ -50,30 +53,36 @@ def zmq_server():
     while True:
         try:
             msg = socket.recv_string()
-            sensor_id, location, pm25, no2, o3, timestamp = msg.split(",")
-            sensor_id = int(sensor_id_str.replace("Sensor", ""))
+            sensor_id_str, location, pm25, no2, o3, timestamp = msg.split(",")
+
+            # "Sensor1" -> 1
+            try:
+                sid = int(sensor_id_str.replace("Sensor", ""))
+            except ValueError:
+                print(f"Invalid sensor_id format: {sensor_id_str}")
+                continue
 
             print(
-                f"[{timestamp}] {sensor_id} ({location}) → "
+                f"[{timestamp}] {sensor_id_str} ({location}) → "
                 f"PM2.5={pm25}  NO2={no2}  O3={o3}"
             )
             
-            # Store data in database
-            # Create sensor if it doesn't exist
-            existing_sensors = db.get_all_sensors()
-            sensor_exists = any(s[0] == int(sensor_id) for s in existing_sensors if s)
-            
-            if not sensor_exists:
-                db.create_sensor(location) 
-            
-            # Store measurements 
-            db.create_measurement(float(pm25), "PM2.5", sensor_id, timestamp)
-            db.create_measurement(float(no2), "NO2", sensor_id, timestamp)
-            db.create_measurement(float(o3), "O3", sensor_id, timestamp)
+            # Storing data in database 
 
+            # Ensure sensor exists (by numeric ID)
+            sensor = db.get_sensor_by_id(sid)
+            if not sensor:
+                print(f"Registering new sensor ID={sid}, City={location}")
+                # NOTE: This assumes fresh DB so autoincrement matches sid order.
+                db.create_sensor(location)
+
+            # Store measurements correctly
+            db.create_measurement(float(pm25), "PM2.5", sid, timestamp)
+            db.create_measurement(float(no2),  "NO2",   sid, timestamp)
+            db.create_measurement(float(o3),   "O3",    sid, timestamp)
 
         except KeyboardInterrupt:
-            print("Server stopped by user.")
+            print("\nServer stopped by user.")
             break
         except Exception as e:
             print(f"Error processing message: {e}")
@@ -88,9 +97,12 @@ def main():
     
     # Run Flask API server
     print("Starting Flask API on http://localhost:5000")
-    app.run(debug=True, host='0.0.0.0', port=5000, use_reloader=False)
-
-
+    app.run(
+        debug=True,
+        host='0.0.0.0',
+        port=5000,
+        use_reloader=False
+    )
 
 if __name__ == "__main__":
     main()
