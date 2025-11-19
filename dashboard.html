@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air Quality Monitoring Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        select {
+            padding: 12px 20px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+            cursor: pointer;
+            min-width: 200px;
+        }
+
+        .auto-refresh {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: auto;
+        }
+
+        .auto-refresh input {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .status-connected {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .status-disconnected {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .sensors-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .sensor-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .sensor-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .sensor-card.selected {
+            border: 3px solid #667eea;
+            background: linear-gradient(135deg, #f5f7ff 0%, #e8ecff 100%);
+        }
+
+        .sensor-card h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.5em;
+        }
+
+        .sensor-card p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .data-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .data-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        .pollutant-group {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 5px solid #667eea;
+        }
+
+        .pollutant-group h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .measurement {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 5px;
+            transition: background 0.2s;
+        }
+
+        .measurement:hover {
+            background: #e8ecff;
+        }
+
+        .measurement-value {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .good {
+            color: #27ae60;
+        }
+
+        .moderate {
+            color: #f39c12;
+        }
+
+        .unhealthy {
+            color: #e74c3c;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-box {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            color: #667eea;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 1.2em;
+        }
+
+        .error {
+            background: #fee;
+            border: 2px solid #e74c3c;
+            color: #c0392b;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-size: 1.1em;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌍 Air Quality Monitoring</h1>
+            <p class="subtitle">Real-time Environmental Data Dashboard</p>
+        </header>
+
+        <div class="status">
+            <span id="statusText">Checking connection...</span>
+            <span id="lastUpdate">Never updated</span>
+        </div>
+
+        <div class="controls">
+            <button onclick="loadSensors()">🔄 Refresh Sensors</button>
+            <button onclick="loadSelectedSensor()">📊 Load Data</button>
+            <select id="sensorSelect" onchange="onSensorChange()">
+                <option value="">Select a sensor...</option>
+            </select>
+    
+        </div>
+
+        <div id="sensorsContainer"></div>
+        <div id="dataContainer"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000';
+        let selectedSensorId = null;
+        let autoRefreshInterval = null;
+
+        // Check connection on load
+        window.onload = function() {
+            checkConnection();
+            loadSensors();
+        };
+
+        async function checkConnection() {
+            try {
+                const response = await fetch(`${API_URL}/hello`, { timeout: 5000 });
+                if (response.ok) {
+                    document.getElementById('statusText').innerHTML = 
+                        '<span class="status-connected">● Connected to server</span>';
+                    return true;
+                }
+            } catch (error) {
+                document.getElementById('statusText').innerHTML = 
+                    '<span class="status-disconnected">● Disconnected - Server not running</span>';
+                return false;
+            }
+        }
+
+        async function loadSensors() {
+            const container = document.getElementById('sensorsContainer');
+            const select = document.getElementById('sensorSelect');
+            
+            container.innerHTML = '<div class="loading"><div class="spinner"></div>Loading sensors...</div>';
+            
+            if (!await checkConnection()) {
+                container.innerHTML = '<div class="error">❌ Cannot connect to server. Make sure server.py is running on port 5000.</div>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/sensors`);
+                const data = await response.json();
+                const sensors = data.sensors || [];
+
+                if (sensors.length === 0) {
+                    container.innerHTML = '<div class="empty">No sensors found. Start some sensors using sensor.py</div>';
+                    return;
+                }
+
+                // Update dropdown
+                select.innerHTML = '<option value="">Select a sensor...</option>';
+                sensors.forEach(sensor => {
+                    const option = document.createElement('option');
+                    option.value = sensor[0];
+                    option.textContent = `Sensor ${sensor[0]} - ${sensor[1]}`;
+                    select.appendChild(option);
+                });
+
+                // Display sensor cards
+                container.innerHTML = '<div class="sensors-grid"></div>';
+                const grid = container.querySelector('.sensors-grid');
+
+                sensors.forEach(sensor => {
+                    const card = document.createElement('div');
+                    card.className = 'sensor-card';
+                    if (selectedSensorId === sensor[0]) {
+                        card.classList.add('selected');
+                    }
+                    card.onclick = () => selectSensor(sensor[0]);
+                    card.innerHTML = `
+                        <h3>Sensor ${sensor[0]}</h3>
+                        <p>📍 ${sensor[1]}</p>
+                    `;
+                    grid.appendChild(card);
+                });
+
+                updateLastUpdate();
+            } catch (error) {
+                container.innerHTML = `<div class="error">❌ Error loading sensors: ${error.message}</div>`;
+            }
+        }
+
+        function selectSensor(sensorId) {
+            selectedSensorId = sensorId;
+            document.getElementById('sensorSelect').value = sensorId;
+            
+            // Update card selection
+            document.querySelectorAll('.sensor-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.target.closest('.sensor-card').classList.add('selected');
+            
+            loadSelectedSensor();
+        }
+
+        function onSensorChange() {
+            selectedSensorId = document.getElementById('sensorSelect').value;
+            if (selectedSensorId) {
+                loadSelectedSensor();
+            }
+        }
+
+        async function loadSelectedSensor() {
+            if (!selectedSensorId) {
+                alert('Please select a sensor first');
+                return;
+            }
+
+            const container = document.getElementById('dataContainer');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div>Loading measurements...</div>';
+
+            try {
+                const response = await fetch(`${API_URL}/getMeasures/${selectedSensorId}`);
+                const data = await response.json();
+                const measurements = data.measurements || [];
+
+                if (measurements.length === 0) {
+                    container.innerHTML = `<div class="empty">No measurements yet for Sensor ${selectedSensorId}. Wait for data...</div>`;
+                    return;
+                }
+
+                // Group by pollutant
+                const grouped = {
+                    'PM2.5': [],
+                    'NO2': [],
+                    'O3': []
+                };
+
+                measurements.forEach(m => {
+                    const pollutant = m[3];
+                    if (grouped[pollutant]) {
+                        grouped[pollutant].push({
+                            id: m[0],
+                            value: m[1],
+                            timestamp: m[2]
+                        });
+                    }
+                });
+
+                // Display data
+                let html = '<div class="data-section">';
+                html += `<h2>Sensor ${selectedSensorId} Data</h2>`;
+
+                for (const [pollutant, values] of Object.entries(grouped)) {
+                    if (values.length > 0) {
+                        html += `<div class="pollutant-group">`;
+                        html += `<h3>${getPollutantName(pollutant)}</h3>`;
+
+                        // Statistics
+                        const avg = values.reduce((sum, v) => sum + v.value, 0) / values.length;
+                        const min = Math.min(...values.map(v => v.value));
+                        const max = Math.max(...values.map(v => v.value));
+                        const latest = values[values.length - 1].value;
+
+                        html += '<div class="stats">';
+                        html += `<div class="stat-box"><div class="stat-label">Latest</div><div class="stat-value ${getQualityClass(pollutant, latest)}">${latest.toFixed(2)}</div></div>`;
+                        html += `<div class="stat-box"><div class="stat-label">Average</div><div class="stat-value">${avg.toFixed(2)}</div></div>`;
+                        html += `<div class="stat-box"><div class="stat-label">Min</div><div class="stat-value">${min.toFixed(2)}</div></div>`;
+                        html += `<div class="stat-box"><div class="stat-label">Max</div><div class="stat-value">${max.toFixed(2)}</div></div>`;
+                        html += `<div class="stat-box"><div class="stat-label">Count</div><div class="stat-value">${values.length}</div></div>`;
+                        html += '</div>';
+
+                        // Recent measurements (last 5)
+                        html += '<h4 style="margin-top: 20px; color: #666;">Recent Measurements:</h4>';
+                        const recent = values.slice(-5);
+                        recent.forEach(m => {
+                            const date = new Date(m.timestamp);
+                            html += `<div class="measurement">`;
+                            html += `<span class="measurement-value ${getQualityClass(pollutant, m.value)}">${m.value.toFixed(2)} µg/m³</span>`;
+                            html += `<span>${date.toLocaleString()}</span>`;
+                            html += `</div>`;
+                        });
+
+                        html += '</div>';
+                    }
+                }
+
+                html += '</div>';
+                container.innerHTML = html;
+                updateLastUpdate();
+            } catch (error) {
+                container.innerHTML = `<div class="error">❌ Error loading data: ${error.message}</div>`;
+            }
+        }
+
+        function getPollutantName(pollutant) {
+            const names = {
+                'PM2.5': '🌫️ PM2.5 (Particulate Matter)',
+                'NO2': '💨 NO2 (Nitrogen Dioxide)',
+                'O3': '☁️ O3 (Ozone)'
+            };
+            return names[pollutant] || pollutant;
+        }
+
+        function getQualityClass(pollutant, value) {
+            const thresholds = {
+                'PM2.5': { good: 12, moderate: 35 },
+                'NO2': { good: 30, moderate: 50 },
+                'O3': { good: 40, moderate: 70 }
+            };
+
+            const t = thresholds[pollutant];
+            if (!t) return '';
+
+            if (value <= t.good) return 'good';
+            if (value <= t.moderate) return 'moderate';
+            return 'unhealthy';
+        }
+
+       
+
+        function updateLastUpdate() {
+            const now = new Date();
+            document.getElementById('lastUpdate').textContent = 
+                `Last updated: ${now.toLocaleTimeString()}`;
+        }
+    </script>
+</body>
+</html>
