@@ -10,7 +10,7 @@ db.create_tables()
 
 # ---------- Flask API endpoints ----------
 
-@app.route('/getMeasures/<int:sensor_id>', methods=['GET'])
+@app.route('/getMeasures/sensor/<int:sensor_id>', methods=['GET'])
 def get_measurements_by_sensor(sensor_id):
     """Get all measurements by sensor ID."""
     try:
@@ -23,7 +23,7 @@ def get_measurements_by_sensor(sensor_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/getMeasures/<string:city>', methods=['GET'])
+@app.route('/getMeasures/city/<string:city>', methods=['GET'])
 def get_measurements_by_city(city):
     """Get all measurements by city."""
     try:
