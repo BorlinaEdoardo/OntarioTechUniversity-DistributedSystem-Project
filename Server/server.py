@@ -9,18 +9,31 @@ app = Flask(__name__)
 db.create_tables()
 
 # API endpoints
-@app.route('/getMeasures/<int:sensor_id>', methods=['GET'])  
-def get_measurements_by_sensor(sensor_id):  # Fixed function name and added parameter
-    """Get all measurements by sensor ID"""
+@app.route('/getMeasures/sensor/<int:sensor_id>', methods=['GET'])
+def get_measurements_by_sensor(sensor_id):
+    """Get all measurements by sensor ID."""
     try:
         measurements = db.get_measurements_by_sensor(sensor_id)
         return jsonify({
-            'sensor_id': sensor_id,
-            'measurements': measurements,
-            'count': len(measurements)
+            "sensor_id": sensor_id,
+            "measurements": measurements,
+            "count": len(measurements)
         })
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/getMeasures/city/<string:city>', methods=['GET'])
+def get_measurements_by_city(city):
+    """Get all measurements by city."""
+    try:
+        measurements = db.get_measurements_by_city(city)
+        return jsonify({
+            "city": city,
+            "measurements": measurements,
+            "count": len(measurements)
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/sensors', methods=['GET'])
 def get_all_sensors():

@@ -123,6 +123,18 @@ def get_measurements_by_sensor(sensor_id):
     connection.close()
     return measurements
 
+def get_measurements_by_city(city):
+    """Get all measurements for a specific city."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT * FROM MEASUREMENT M, SENSOR S WHERE S.Id = M.Sensor_id AND City = ?",
+        (city,)
+    )
+    measurements = cursor.fetchall()
+    conn.close()
+    return measurements
+
 def get_all_measurements():
     """Get all measurements"""
     connection = get_connection()
