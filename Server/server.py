@@ -23,6 +23,19 @@ def get_measurements_by_sensor(sensor_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/getMeasures/<string:city>', methods=['GET'])
+def get_measurements_by_city(city):
+    """Get all measurements by city."""
+    try:
+        measurements = db.get_measurements_by_city(city)
+        return jsonify({
+            "city": city,
+            "measurements": measurements,
+            "count": len(measurements)
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/sensors', methods=['GET'])
 def get_all_sensors():
     """Get all sensors."""
