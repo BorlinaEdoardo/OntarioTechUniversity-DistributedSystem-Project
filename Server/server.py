@@ -20,13 +20,26 @@ def add_cors_headers(response):
     response.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
     return response
 
-@app.route('/getMeasures/<int:sensor_id>', methods=['GET'])
+@app.route('/getMeasures/sensor/<int:sensor_id>', methods=['GET'])
 def get_measurements_by_sensor(sensor_id):
     """Get all measurements by sensor ID."""
     try:
         measurements = db.get_measurements_by_sensor(sensor_id)
         return jsonify({
             "sensor_id": sensor_id,
+            "measurements": measurements,
+            "count": len(measurements)
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/getMeasures/city/<string:city>', methods=['GET'])
+def get_measurements_by_city(city):
+    """Get all measurements by city."""
+    try:
+        measurements = db.get_measurements_by_city(city)
+        return jsonify({
+            "city": city,
             "measurements": measurements,
             "count": len(measurements)
         })
