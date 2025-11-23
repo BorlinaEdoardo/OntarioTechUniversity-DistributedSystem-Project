@@ -2,6 +2,7 @@ import zmq
 from database import db  # requires project_root/database/__init__.py
 from flask import Flask, jsonify
 import threading
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -9,6 +10,15 @@ app = Flask(__name__)
 db.create_tables()
 
 # ---------- Flask API endpoints ----------
+
+# Allow CORS for all routes
+@app.after_request
+def add_cors_headers(response):
+    """Allow browser dashboard to connect"""
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+    return response
 
 @app.route('/getMeasures/<int:sensor_id>', methods=['GET'])
 def get_measurements_by_sensor(sensor_id):

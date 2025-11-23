@@ -40,6 +40,7 @@ def create_tables():
 
 # ========== SENSOR CRUD ==========
 
+# create a new sensor
 def create_sensor(city):
     """Create a new sensor"""
     connection = get_connection()
@@ -50,6 +51,7 @@ def create_sensor(city):
     conn.close()
     return sensor_id
 
+
 def get_sensor_by_id(sensor_id):
     """Get a sensor by ID."""
     conn = get_connection()
@@ -58,6 +60,7 @@ def get_sensor_by_id(sensor_id):
     sensor = cursor.fetchone()
     conn.close()
     return sensor
+
 
 def get_all_sensors():
     """Get all sensors."""

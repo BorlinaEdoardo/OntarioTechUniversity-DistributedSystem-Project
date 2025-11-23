@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Air Quality Monitor</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* Header & Status */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        .status-ok { background: #dcfce7; color: #166534; }
+        .status-err { background: #fee2e2; color: #991b1b; }
+
+        /* Grid Layout */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Sensor List (Left Sidebar) */
+        .card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+
+        .sensor-list-title {
+            margin-top: 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .sensor-item {
+            padding: 15px;
+            margin: 10px 0;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .sensor-item:hover {
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        .sensor-item.active {
+            background: #eff6ff;
+            border-color: var(--primary);
+            font-weight: bold;
+        }
+
+        /* Data Display (Right Side) */
+        .pollutant-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .pollutant-card {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border-top: 4px solid #ccc;
+        }
+
+        .pollutant-card.good { border-color: #22c55e; background: #f0fdf4; }
+        .pollutant-card.moderate { border-color: #f59e0b; background: #fffbeb; }
+        .pollutant-card.bad { border-color: #ef4444; background: #fef2f2; }
+
+        .value { font-size: 2.5rem; font-weight: bold; margin: 10px 0; }
+        .unit { font-size: 1rem; color: #64748b; }
+        .timestamp { font-size: 0.8rem; color: #94a3b8; margin-top: 10px; }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        button:hover { opacity: 0.9; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div>
+            <h1>🍃 Air Quality Monitor</h1>
+            <p>Real-time sensor tracking</p>
+        </div>
+        <div>
+            <span id="connectionStatus" class="status-badge status-err">Connecting...</span>
+            <button onclick="fetchSensors()">↻ Refresh</button>
+        </div>
+    </header>
+
+    <div class="dashboard-grid">
+        <!-- Left Column: List of Sensors -->
+        <div class="card">
+            <h3 class="sensor-list-title">Available Sensors</h3>
+            <div id="sensorList">
+                <p style="color:#666">Loading sensors...</p>
+            </div>
+        </div>
+
+        <!-- Right Column: Detailed Data -->
+        <div class="card" id="detailsPanel">
+            <h2 id="selectedCity">Select a sensor</h2>
+            <div id="measurementsContainer">
+                <p style="color:#666">Click on a sensor from the list to view air quality details.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_URL = 'http://localhost:5000';
+    let currentSensorId = null;
+
+    // 1. Initialize
+    window.onload = () => {
+        fetchSensors();
+        // Auto-refresh data every 10 seconds if a sensor is selected
+        setInterval(() => {
+            if(currentSensorId) fetchMeasurements(currentSensorId);
+        }, 10000);
+    };
+
+    // 2. Fetch List of Sensors
+    async function fetchSensors() {
+        try {
+            const response = await fetch(`${API_URL}/sensors`);
+            const data = await response.json();
+            
+            updateStatus(true);
+            renderSensorList(data.sensors);
+        } catch (error) {
+            console.error(error);
+            updateStatus(false);
+            document.getElementById('sensorList').innerHTML = '<p style="color:red">Cannot connect to server.</p>';
+        }
+    }
+
+    // 3. Render the list of sensors
+    function renderSensorList(sensors) {
+        const list = document.getElementById('sensorList');
+        list.innerHTML = '';
+
+        if (sensors.length === 0) {
+            list.innerHTML = '<p>No sensors active.</p>';
+            return;
+        }
+
+        sensors.forEach(sensor => {
+            // sensor array structure: [id, city]
+            const id = sensor[0];
+            const city = sensor[1];
+
+            const div = document.createElement('div');
+            div.className = `sensor-item ${currentSensorId === id ? 'active' : ''}`;
+            div.innerHTML = `<strong>📍 ${city}</strong> <br><small>ID: ${id}</small>`;
+            div.onclick = () => {
+                currentSensorId = id;
+                document.getElementById('selectedCity').innerText = `Analytics: ${city}`;
+                
+                // Highlight active item
+                document.querySelectorAll('.sensor-item').forEach(el => el.classList.remove('active'));
+                div.classList.add('active');
+
+                fetchMeasurements(id);
+            };
+            list.appendChild(div);
+        });
+    }
+
+    // 4. Fetch Data for Specific Sensor
+    async function fetchMeasurements(sensorId) {
+        const container = document.getElementById('measurementsContainer');
+        
+        // FIX: Don't clear screen if we already have data (prevents flashing)
+        if (!container.querySelector('.pollutant-grid')) {
+             container.innerHTML = '<p>Loading data...</p>';
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/getMeasures/${sensorId}`);
+            const data = await response.json();
+            
+            // Process data: Group by pollutant to find the latest reading for each
+            const latestReadings = {}; 
+
+            // Data structure: [id, value, timestamp, pollutant]
+            data.measurements.forEach(m => {
+                const value = m[1];
+                const time = m[2];
+                const type = m[3];
+
+                latestReadings[type] = { value, time };
+            });
+
+            renderPollutants(latestReadings);
+
+        } catch (error) {
+            // Only show error if we don't have old data shown
+            if (!container.querySelector('.pollutant-grid')) {
+                container.innerHTML = `<p style="color:red">Error loading data: ${error.message}</p>`;
+            } else {
+                console.error("Background update failed:", error);
+            }
+        }
+    }
+
+    // 5. Render the Pollutant Cards
+    function renderPollutants(readings) {
+        const container = document.getElementById('measurementsContainer');
+        
+        if (Object.keys(readings).length === 0) {
+            container.innerHTML = '<p>No data received yet.</p>';
+            return;
+        }
+
+        let html = '<div class="pollutant-grid">';
+        
+        for (const [type, data] of Object.entries(readings)) {
+            const quality = getQualityClass(type, data.value);
+            const date = new Date(data.time).toLocaleTimeString();
+
+            html += `
+                <div class="pollutant-card ${quality.class}">
+                    <h3>${type}</h3>
+                    <div class="value">${data.value.toFixed(1)}</div>
+                    <div class="unit">µg/m³</div>
+                    <div style="margin: 10px 0; font-weight:bold; color:${quality.color}">${quality.label}</div>
+                    <div class="timestamp">Updated: ${date}</div>
+                </div>
+            `;
+        }
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    // Helper: Determine Color/Quality based on thresholds
+    function getQualityClass(type, value) {
+        // Simple thresholds example
+        let limits = { good: 20, bad: 50 }; 
+        if (type === 'PM2.5') limits = { good: 12, bad: 35 };
+        if (type === 'NO2') limits = { good: 50, bad: 100 };
+        
+        if (value <= limits.good) return { class: 'good', label: 'Good', color: '#166534' };
+        if (value >= limits.bad) return { class: 'bad', label: 'Unhealthy', color: '#991b1b' };
+        return { class: 'moderate', label: 'Moderate', color: '#b45309' };
+    }
+
+    function updateStatus(isConnected) {
+        const el = document.getElementById('connectionStatus');
+        if (isConnected) {
+            el.textContent = "● Online";
+            el.className = "status-badge status-ok";
+        } else {
+            el.textContent = "● Offline";
+            el.className = "status-badge status-err";
+        }
+    }
+</script>
+
+</body>
+</html>
