@@ -4,7 +4,7 @@ from flask import Flask, jsonify
 import threading
 from datetime import datetime
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static')
 
 # Initialize database
 db.create_tables()
@@ -19,6 +19,11 @@ def add_cors_headers(response):
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
     response.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
     return response
+
+# MAIN DASHBOARD (NEW)
+@app.route('/')
+def index():
+    return app.send_static_file("index.html")
 
 @app.route('/getMeasures/sensor/<int:sensor_id>', methods=['GET'])
 def get_measurements_by_sensor(sensor_id):
@@ -90,13 +95,10 @@ def zmq_server():
                 f"PM2.5={pm25}  NO2={no2}  O3={o3}"
             )
             
-            # Storing data in database 
-
             # Ensure sensor exists (by numeric ID)
             sensor = db.get_sensor_by_id(sid)
             if not sensor:
                 print(f"Registering new sensor ID={sid}, City={location}")
-                # NOTE: This assumes fresh DB so autoincrement matches sid order.
                 db.create_sensor(location)
 
             # Store measurements correctly

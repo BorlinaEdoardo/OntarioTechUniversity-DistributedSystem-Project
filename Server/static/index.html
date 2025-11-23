@@ -220,32 +220,28 @@
     // 4. Fetch Data for Specific Sensor
     async function fetchMeasurements(sensorId) {
         const container = document.getElementById('measurementsContainer');
-        
-        // FIX: Don't clear screen if we already have data (prevents flashing)
+
         if (!container.querySelector('.pollutant-grid')) {
-             container.innerHTML = '<p>Loading data...</p>';
+            container.innerHTML = '<p>Loading data...</p>';
         }
 
         try {
-            const response = await fetch(`${API_URL}/getMeasures/${sensorId}`);
+            // FIXED URL:
+            const response = await fetch(`${API_URL}/getMeasures/sensor/${sensorId}`);
             const data = await response.json();
-            
-            // Process data: Group by pollutant to find the latest reading for each
-            const latestReadings = {}; 
 
-            // Data structure: [id, value, timestamp, pollutant]
+            const latestReadings = {};
+
             data.measurements.forEach(m => {
                 const value = m[1];
                 const time = m[2];
                 const type = m[3];
-
                 latestReadings[type] = { value, time };
             });
 
             renderPollutants(latestReadings);
 
         } catch (error) {
-            // Only show error if we don't have old data shown
             if (!container.querySelector('.pollutant-grid')) {
                 container.innerHTML = `<p style="color:red">Error loading data: ${error.message}</p>`;
             } else {
