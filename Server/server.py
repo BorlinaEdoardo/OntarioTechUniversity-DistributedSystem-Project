@@ -20,7 +20,7 @@ def add_cors_headers(response):
     response.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
     return response
 
-# MAIN DASHBOARD (NEW)
+# MAIN DASHBOARD
 @app.route('/')
 def index():
     return app.send_static_file("index.html")
@@ -83,7 +83,6 @@ def zmq_server():
             msg = socket.recv_string()
             sensor_id_str, location, pm25, no2, o3, timestamp = msg.split(",")
 
-            # "Sensor1" -> 1
             try:
                 sid = int(sensor_id_str.replace("Sensor", ""))
             except ValueError:

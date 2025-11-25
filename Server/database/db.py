@@ -186,7 +186,7 @@ def delete_measurement(measurement_id):
     conn.close()
     return rows_affected
 
-# Helper
+# helper
 
 def get_sensor_with_measurements(sensor_id):
     """Get sensor with all its measurements."""
